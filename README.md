@@ -160,3 +160,4 @@ This project is licensed under the [MIT License](./LICENSE).
 ## 🙏 Acknowledgements
 
 Our framework builds upon prior work from [Vid2Seq](https://github.com/antoyang/VidChapters), [CLIP](https://github.com/openai/CLIP), and others. We thank the open-source community!
+This work was supported by Institute of Information & communications Technology Planning & Evaluation (IITP) grant funded by the Korea government(MSIT) (No.RS-2022-00155911, Artificial Intelligence Convergence Innovation Human Resources Development (Kyung Hee University)
