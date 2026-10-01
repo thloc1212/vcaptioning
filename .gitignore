@@ -2,6 +2,10 @@ save/
 save*
 *.hdf5
 *.npy
+data/yc2/features/
+data/anet/features/
+data/features/
+results/
 *.tmp
 
 *.Ink

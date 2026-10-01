@@ -1,0 +1,4 @@
+id: ''
+base_cfg_path: cfgs/yc2_univl_refine.yml
+visual_feature_folder: ['data/features/yc2/UniVL_features/UniVL_visual/']
+text_feature_folder: ['data/features/yc2/UniVL_features/UniVL_text/']
