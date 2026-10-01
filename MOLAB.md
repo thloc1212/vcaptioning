@@ -4,13 +4,15 @@ This repository is based on the [official DIBS implementation](https://github.co
 
 ## Open in molab
 
-Open [molab notebooks](https://molab.marimo.io/notebooks/) and use **Mirror from GitHub** with `https://github.com/thloc1212/vcaptioning`. In its terminal, change to the repository directory and run:
+Open [molab notebooks](https://molab.marimo.io/notebooks/) and use **Mirror from GitHub** with `https://github.com/thloc1212/vcaptioning`. Open `notebooks/yc2_pelt.py`. In its terminal, change to the repository directory and run:
 
 ```bash
 python -m pip install -r requirements-segmentation.txt
 python scripts/download_yc2_univl.py
 python -m temporal_segmentation.evaluate_pelt --penalty 10
 ```
+
+The notebook's **Evaluate** button runs a smaller interactive sample. The last command above runs the complete validation set.
 
 The official [feature archive](https://huggingface.co/datasets/Exclibur/dibs-feature) is 4 GB compressed. The download script streams the archive and retains only YouCook2 UniVL visual and text `.npy` files under `data/features/`; allow time and storage for this. Downloads made in a molab terminal may need to be repeated in a later session; molab documents [persistent caching and storage limits](https://molab.marimo.io/blog/seamless-storage-in-molab).
 
