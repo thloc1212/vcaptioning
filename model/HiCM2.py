@@ -281,7 +281,7 @@ class Vid2Seq(torch.nn.Module):
             return torch.arange(similarity_scores.shape[0])
         return torch.topk(similarity_scores, k, dim=0).indices
 
-    def hierarchical_memory_search(self, target_feature, soft_k, memory_hierarchy):
+    def hierarchical_memory_search(self, target_feature, soft_k, memory_hierarchy, return_trace=False):
         k = soft_k
         threshold = 0.7
         selected_levels = self.args.hier_use
@@ -289,6 +289,7 @@ class Vid2Seq(torch.nn.Module):
         
         combined_vectors = []
         topk_clusters = []
+        trace = []
         
         max_level = max(memory_hierarchy.keys(), key=lambda x: int(x.split('_')[1]))
         sorted_levels = sorted(memory_hierarchy.keys(), key=lambda x: int(x.split('_')[1]), reverse=True)
@@ -312,7 +313,8 @@ class Vid2Seq(torch.nn.Module):
                 elif retrieval_type == "similarity":
                     topk_clusters = [(score, cluster) for score, cluster in topk_clusters if score >= threshold]
                     if not topk_clusters:
-                        return torch.zeros_like(target_feature.unsqueeze(0))  # No clusters exceed the threshold
+                        empty = torch.zeros_like(target_feature.unsqueeze(0))
+                        return (empty, trace) if return_trace else empty
 
             else:
                 next_level_clusters = []
@@ -343,13 +345,18 @@ class Vid2Seq(torch.nn.Module):
                     # If retrieval_type is adaptive and topk_clusters is empty, return averaged combined_vectors
                         if combined_vectors:
                             final_embedding = torch.cat(combined_vectors, dim=0).mean(dim=0, keepdim=True)
-                            return final_embedding
+                            return (final_embedding, trace) if return_trace else final_embedding
                         else:
-                            return torch.zeros_like(target_feature.unsqueeze(0))  # No clusters exceed the threshold
+                            empty = torch.zeros_like(target_feature.unsqueeze(0))
+                            return (empty, trace) if return_trace else empty
 
                 # Descend through the FINCH hierarchy. Without this assignment,
                 # every selected level reuses the top-level clusters.
                 topk_clusters = next_level_clusters
+
+            if return_trace:
+                names = {id(cluster): name for name, cluster in clusters.items()}
+                trace.append({"level": level, "clusters": [names[id(cluster)] for _, cluster in topk_clusters]})
 
             # Append the summary texts for the current level
             for _, cluster in topk_clusters:
@@ -367,7 +374,7 @@ class Vid2Seq(torch.nn.Module):
         final_embedding = torch.cat(combined_vectors, dim=0)  
         final_embedding = final_embedding.mean(dim=0,keepdim=True)
 
-        return final_embedding
+        return (final_embedding, trace) if return_trace else final_embedding
 
 
     def ret(self,target_video,memory_bank,mode,uns_video=None):

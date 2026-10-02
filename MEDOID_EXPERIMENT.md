@@ -42,3 +42,13 @@ The branch also makes the custom T5 explicitly inherit `GenerationMixin`, as req
 Both runs load `presave/yc2/best_model.pth`, use the same validation dataset, seed and evaluation arguments, and differ only in `--ret_path`. Metrics and predictions are written separately under `presave/yc2_llm_eval/` and `presave/yc2_medoid_eval/`; the shell script prints side-by-side metric deltas. `--eval` performs inference only. The repository's `requirements.txt` pins Python 3.7-era packages and PyTorch 1.13; molab's current Python/GPU stack may require compatibility work before full inference runs. The memory construction step can be run independently.
 
 The upstream retrieval code computed child clusters but failed to assign them as the current clusters. This branch fixes that step in `model/HiCM2.py`. **Both** LLaMA and medoid runs use the fix and the same released checkpoint. As a result, the paired comparison is fair, but the LLaMA arm may differ from metrics obtained with the unmodified upstream code. If medoid inference is promising, fine-tune with the new bank using the same training schedule as the LLaMA bank for the final comparison.
+
+## Verify that medoid changes retrieval
+
+Close evaluation metrics do not show whether the model consumed the replacement memory. After both inference runs, run:
+
+```bash
+python audit_yc2_retrieval.py --videos 8
+```
+
+This audit loads the same validation frame features and trained retrieval projection. It reports how many bank embeddings differ, how many of the sampled windows select different FINCH clusters at each level, cosine/L2 differences of the retrieved vectors before and after projection, and how many saved video predictions differ. It calls the model's own `hierarchical_memory_search` method; it does not regenerate captions. `projected_changed_windows > 0` demonstrates that different memory tokens enter the T5 encoder. A high cosine after projection or few changed predictions can explain near-identical aggregate metrics without implying the medoid bank was ignored.
