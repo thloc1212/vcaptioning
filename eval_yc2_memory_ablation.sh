@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+python - <<'PY'
+import transformers
+from transformers import pytorch_utils
+if not hasattr(pytorch_utils, "find_pruneable_heads_and_indices"):
+    raise SystemExit(
+        f"Transformers {transformers.__version__} is too new for upstream HiCM2. "
+        "On molab run: uv pip install --python /tmp/uv-venv/bin/python 'transformers==4.57.6'"
+    )
+PY
+
 checkpoint=./presave/yc2/best_model.pth
 original=./hierarchical_clustering_results_yc2_70B.pkl
 medoid=./hierarchical_clustering_results_yc2_medoid.pkl

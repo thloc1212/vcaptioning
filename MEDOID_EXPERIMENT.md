@@ -30,9 +30,12 @@ The script encodes 10,337 original YC2 training sentences using CLIP ViT-L/14. A
 The public [YC2 dataset files](https://huggingface.co/datasets/Geppa/HiCM2/tree/main/data/yc2) and [YC2 checkpoint](https://huggingface.co/Geppa/HiCM2/tree/main/presave/yc2) total about 4.4 GB. Install `huggingface_hub`, then download the exact files needed for inference:
 
 ```bash
+uv pip install --python /tmp/uv-venv/bin/python 'transformers==4.57.6'
 python download_yc2_assets.py
 bash eval_yc2_memory_ablation.sh
 ```
+
+Molab's newer Transformers 5 removes `find_pruneable_heads_and_indices`, which the upstream custom T5 imports. Transformers 4.57.6 still exports that helper and has Python 3.13-compatible dependencies. Use molab's `/tmp/uv-venv` rather than the system pip environment.
 
 Both runs load `presave/yc2/best_model.pth`, use the same validation dataset, seed and evaluation arguments, and differ only in `--ret_path`. Metrics and predictions are written separately under `presave/yc2_llm_eval/` and `presave/yc2_medoid_eval/`; the shell script prints side-by-side metric deltas. `--eval` performs inference only. The repository's `requirements.txt` pins Python 3.7-era packages and PyTorch 1.13; molab's current Python/GPU stack may require compatibility work before full inference runs. The memory construction step can be run independently.
 
