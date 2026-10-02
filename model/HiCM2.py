@@ -343,6 +343,10 @@ class Vid2Seq(torch.nn.Module):
                         else:
                             return torch.zeros_like(target_feature.unsqueeze(0))  # No clusters exceed the threshold
 
+                # Descend through the FINCH hierarchy. Without this assignment,
+                # every selected level reuses the top-level clusters.
+                topk_clusters = next_level_clusters
+
             # Append the summary texts for the current level
             for _, cluster in topk_clusters:
                 if "summary" in cluster:

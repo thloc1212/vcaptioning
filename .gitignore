@@ -3,6 +3,9 @@ out_log/
 __pycache__/
 checkpoints/
 *.pth
+hierarchical_clustering_results_*_medoid.pkl
+data/
+presave/
 MAD_EVAL_anno_named.pkl
 MAD_EVAL_anno_unnamed.json
 mad_v2_unnamed.json
