@@ -392,7 +392,9 @@ def main(args):
     if args.load:
         if dist.is_main_process():
             print("loading from", args.load)
-        checkpoint = torch.load(args.load, map_location="cpu")
+        # The released HiCM2 checkpoint contains an argparse.Namespace in
+        # addition to tensors. Only load checkpoints from a trusted source.
+        checkpoint = torch.load(args.load, map_location="cpu", weights_only=False)
         model.load_state_dict(checkpoint["model"], strict=False)
         if args.resume and not args.eval:
             optimizer.load_state_dict(checkpoint["optimizer"])
@@ -497,6 +499,7 @@ def main(args):
                 checkpoint = torch.load(
                     os.path.join(args.save_dir, f"best_model.pth"),
                     map_location="cpu",
+                    weights_only=False,
                 )
                 model.load_state_dict(checkpoint["model"], strict=False)
 

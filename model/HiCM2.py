@@ -231,6 +231,10 @@ class Vid2Seq(torch.nn.Module):
                 repetition_penalty=repetition_penalty,
                 length_penalty=length_penalty,
                 num_return_sequences=num_captions,
+                # This custom T5 still uses tuple past_key_values. Transformers
+                # 4.57 generates Cache objects by default, so decode without
+                # cache until the attention implementation is migrated.
+                use_cache=False,
         )
         output_text = self.t5_tokenizer.batch_decode(
             outputs, skip_special_tokens=True
