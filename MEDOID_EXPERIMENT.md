@@ -1,6 +1,6 @@
 # HiCM²: LLaMA memory versus medoid memory
 
-The [upstream HiCM² repository](https://github.com/ailab-kyunghee/HiCM2-DVC) includes the YouCook2 FINCH hierarchy with LLaMA summaries in `hierarchical_clustering_results_yc2_70B.pkl`. This experiment reuses those exact FINCH clusters and parent links. For every cluster, `medoid_memory.py` chooses the original training sentence with the largest mean cosine similarity to other sentences in that cluster, measured in CLIP ViT-L/14 text space. Its CLIP embedding replaces the LLaMA-summary embedding. The output has the same `level_* / cluster_* / clip_embedding` interface and `[1,768]` embedding shape. It does not invoke LLaMA or train the caption model.
+The [upstream HiCM² repository](https://github.com/ailab-kyunghee/HiCM2-DVC) includes the YouCook2 FINCH hierarchy with LLaMA summaries in `hierarchical_clustering_results_yc2_70B.pkl`. This experiment reuses those exact FINCH clusters and parent links. For every cluster, `medoid_memory.py` chooses the original training sentence with the largest mean cosine similarity to other sentences in that cluster, measured in CLIP ViT-L/14 text space. Its CLIP embedding replaces the LLaMA-summary embedding. The output has the same `level_* / cluster_* / clip_embedding` interface, `[1,768]` embedding shape, and `float16` storage dtype. It does not invoke LLaMA or train the caption model.
 
 ## Build the medoid bank
 

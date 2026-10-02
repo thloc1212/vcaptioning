@@ -71,7 +71,8 @@ def build_medoid_bank(source, embeddings):
         for key, cluster in clusters.items():
             index = medoid_index(cluster["indices"], embeddings)
             cluster["summary"] = sentences[index]
-            cluster["clip_embedding"] = embeddings[index:index + 1].astype(np.float32)
+            original_dtype = np.asarray(source[level][key]["clip_embedding"]).dtype
+            cluster["clip_embedding"] = embeddings[index:index + 1].astype(original_dtype)
             cluster["medoid_index"] = index
     return result
 
