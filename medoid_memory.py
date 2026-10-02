@@ -31,6 +31,17 @@ def original_sentences(bank):
 
 def encode_clip(sentences, model_name="ViT-L/14", batch_size=128, device=None):
     import clip
+
+    if not callable(getattr(clip, "load", None)) or not callable(getattr(clip, "tokenize", None)):
+        location = getattr(clip, "__file__", "unknown location")
+        raise RuntimeError(
+            f"Imported {location}, but this is not OpenAI CLIP. "
+            "Install the repo's pinned package into the Python running this script: "
+            "python -m pip install --force-reinstall --no-deps "
+            "'git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1'. "
+            "Then verify: python -c 'import clip; print(clip.__file__, clip.load)'"
+        )
+
     import torch
 
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")

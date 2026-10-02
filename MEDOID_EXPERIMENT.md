@@ -6,6 +6,15 @@ The [upstream HiCM² repository](https://github.com/ailab-kyunghee/HiCM2-DVC) in
 
 Install the upstream environment or a compatible environment with `numpy`, `torch`, and [OpenAI CLIP](https://github.com/openai/CLIP). From the repository root:
 
+If `clip.load` is missing, the terminal is importing another package named `clip`. Install the exact OpenAI CLIP revision used by this repo into the terminal's Python and verify the import:
+
+```bash
+python -m pip install --force-reinstall --no-deps 'git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1'
+python -c 'import clip; print(clip.__file__, clip.load)'
+```
+
+Then build the bank:
+
 ```bash
 python medoid_memory.py \
   --source hierarchical_clustering_results_yc2_70B.pkl \
