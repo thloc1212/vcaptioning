@@ -54,3 +54,18 @@ python audit_yc2_retrieval.py --videos 8
 This audit loads the same validation frame features and trained retrieval projection. It reports how many bank embeddings differ, how many sampled windows change the **set** of selected FINCH clusters versus only their ranking, cosine/L2 differences of the retrieved vectors before and after projection, and how many saved video predictions differ. It calls the model's own `hierarchical_memory_search` method; it does not regenerate captions. `projected_changed_windows > 0` demonstrates that different memory tokens enter the T5 encoder. A high cosine after projection or few changed predictions can explain near-identical aggregate metrics without implying the medoid bank was ignored. At YC2's top level there are only eight clusters and `soft_k=10`, so the selected set there cannot change; only its order can.
 
 To determine whether this checkpoint uses memory **content** at all, run `bash eval_yc2_zero_memory.sh`. It keeps the same hierarchy, retrieval code, projection weights and checkpoint, but sets every bank embedding to zero. If quality drops substantially, memory matters and medoid preserves useful information. If quality remains close, the current model relies mainly on the video/subtitle path or the constant projection output; then a fair fine-tuning comparison is needed before making a claim about medoid quality. This control does not measure memory construction cost.
+
+## Random and No-memory controls
+
+After the LLM and medoid evaluations above have written their result files, run:
+
+```bash
+git pull origin hicm2-medoid
+bash eval_yc2_controls.sh
+```
+
+The script builds `hierarchical_clustering_results_yc2_random_seed42.pkl` if needed. For each FINCH cluster, it samples one original sentence uniformly with NumPy seed 42, encodes the chosen sentences with the same CLIP ViT-L/14 text model, and preserves the original bank hierarchy and embedding dtype. This tests whether medoid selection improves on an arbitrary member of the same cluster. For a stronger estimate, repeat the Random run with several seeds and report mean and variation; seed 42 is one reproducible draw.
+
+The No-memory run passes `--ret_option no_ret`, which leaves the memory bank unloaded and omits retrieved tokens from the T5 encoder input. It still loads the same released checkpoint; the unused retrieval projection weights appear as unexpected checkpoint keys because that module is absent in this arm. This differs from the zero-memory control, which retains the retrieval path and its projection but feeds zero embeddings. No-memory is an inference ablation of a model trained with memory, so a large drop measures reliance on the trained memory path, while a small drop limits claims about its necessity. It is not a separately trained no-memory baseline.
+
+The script evaluates Random and No-memory on the same YC2 validation data with the same checkpoint and decoding arguments as the paired script. It then prints CIDEr, METEOR, F1, threshold F1, and SODA for all four arms from the saved evaluator JSON files. The new outputs are under `presave/yc2_random_eval/` and `presave/yc2_no_memory_eval/`. Full four-arm evaluation needs the Molab GPU and has not been run locally.

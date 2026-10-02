@@ -395,7 +395,14 @@ def main(args):
         # The released HiCM2 checkpoint contains an argparse.Namespace in
         # addition to tensors. Only load checkpoints from a trusted source.
         checkpoint = torch.load(args.load, map_location="cpu", weights_only=False)
-        model.load_state_dict(checkpoint["model"], strict=False)
+        load_result = model.load_state_dict(checkpoint["model"], strict=False)
+        if dist.is_main_process():
+            print(f"checkpoint load: {len(load_result.missing_keys)} missing, "
+                  f"{len(load_result.unexpected_keys)} unexpected tensors")
+            if load_result.missing_keys:
+                print("missing keys:", load_result.missing_keys[:10])
+            if load_result.unexpected_keys:
+                print("unexpected keys:", load_result.unexpected_keys[:10])
         if args.resume and not args.eval:
             optimizer.load_state_dict(checkpoint["optimizer"])
             args.start_epoch = checkpoint["epoch"] + 1
