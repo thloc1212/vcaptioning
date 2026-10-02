@@ -5,9 +5,7 @@ checkpoint=./presave/yc2/best_model.pth
 random_bank=./hierarchical_clustering_results_yc2_random_seed42.pkl
 
 for path in "$checkpoint" ./hierarchical_clustering_results_yc2_70B.pkl \
-  ./data/yc2/clipvitl14.pth ./data/yc2/val.json \
-  ./presave/yc2_llm_eval/youcooksummary.json \
-  ./presave/yc2_medoid_eval/youcooksummary.json; do
+  ./data/yc2/clipvitl14.pth ./data/yc2/val.json; do
   if [[ ! -f "$path" ]]; then
     echo "Missing required file: $path" >&2
     exit 1
@@ -35,4 +33,9 @@ python -m torch.distributed.run --nproc_per_node=1 dvc_ret.py \
 python -m torch.distributed.run --nproc_per_node=1 dvc_ret.py \
   "${common[@]}" --ret_option no_ret --save_dir yc2_no_memory_eval
 
-python summarize_yc2_ablation.py
+if [[ -f ./presave/yc2_llm_eval/youcooksummary.json && \
+      -f ./presave/yc2_medoid_eval/youcooksummary.json ]]; then
+  python summarize_yc2_ablation.py
+else
+  echo "Random and No-memory evaluations finished. Run the LLM/Medoid evaluation before printing the four-arm table."
+fi

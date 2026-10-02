@@ -57,7 +57,7 @@ To determine whether this checkpoint uses memory **content** at all, run `bash e
 
 ## Random and No-memory controls
 
-After the LLM and medoid evaluations above have written their result files, run:
+The Random and No-memory evaluations can run before or after the LLM and medoid evaluations:
 
 ```bash
 git pull origin hicm2-medoid
@@ -68,4 +68,4 @@ The script builds `hierarchical_clustering_results_yc2_random_seed42.pkl` if nee
 
 The No-memory run passes `--ret_option no_ret`, which leaves the memory bank unloaded and omits retrieved tokens from the T5 encoder input. It still loads the same released checkpoint; the unused retrieval projection weights appear as unexpected checkpoint keys because that module is absent in this arm. This differs from the zero-memory control, which retains the retrieval path and its projection but feeds zero embeddings. No-memory is an inference ablation of a model trained with memory, so a large drop measures reliance on the trained memory path, while a small drop limits claims about its necessity. It is not a separately trained no-memory baseline.
 
-The script evaluates Random and No-memory on the same YC2 validation data with the same checkpoint and decoding arguments as the paired script. It then prints CIDEr, METEOR, F1, threshold F1, and SODA for all four arms from the saved evaluator JSON files. The new outputs are under `presave/yc2_random_eval/` and `presave/yc2_no_memory_eval/`. Full four-arm evaluation needs the Molab GPU and has not been run locally.
+The script evaluates Random and No-memory on the same YC2 validation data with the same checkpoint and decoding arguments as the paired script. The new outputs are under `presave/yc2_random_eval/` and `presave/yc2_no_memory_eval/`. If the LLM and medoid results already exist, it prints CIDEr, METEOR, F1, threshold F1, and SODA for all four arms. Otherwise, after those runs finish, use `python summarize_yc2_ablation.py`. Full four-arm evaluation needs the Molab GPU and has not been run locally.
