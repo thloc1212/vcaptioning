@@ -6,17 +6,18 @@ The [upstream HiCM² repository](https://github.com/ailab-kyunghee/HiCM2-DVC) in
 
 Install the upstream environment or a compatible environment with `numpy`, `torch`, and [OpenAI CLIP](https://github.com/openai/CLIP). From the repository root:
 
-If `clip.load` is missing, the terminal is importing another package named `clip`. Install the exact OpenAI CLIP revision used by this repo into the terminal's Python and verify the import:
+If `clip.load` is missing on molab, the environment is importing another package named `clip`. The upstream OpenAI CLIP `setup.py` uses `pkg_resources`, which was removed from setuptools 82. On molab, install the pinned revision **into the same uv environment used by the notebook** and disable build isolation:
 
 ```bash
-python -m pip install --force-reinstall --no-deps 'git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1'
-python -c 'import clip; print(clip.__file__, clip.load)'
+uv pip install --python /tmp/uv-venv/bin/python 'setuptools<82' wheel
+uv pip install --python /tmp/uv-venv/bin/python --no-build-isolation --reinstall --no-deps 'git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1'
+/tmp/uv-venv/bin/python -c 'import clip; print(clip.__file__, clip.load)'
 ```
 
-Then build the bank:
+Use `/tmp/uv-venv/bin/python` for the bank command too, so installation and execution use the same environment. The pip cache ownership warning is unrelated to the build failure. Then build the bank:
 
 ```bash
-python medoid_memory.py \
+/tmp/uv-venv/bin/python medoid_memory.py \
   --source hierarchical_clustering_results_yc2_70B.pkl \
   --output hierarchical_clustering_results_yc2_medoid.pkl \
   --batch-size 128
