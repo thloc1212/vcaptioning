@@ -79,9 +79,11 @@ def compare_predictions(first_path, second_path):
     first = json.loads(first_path.read_text())["results"]
     second = json.loads(second_path.read_text())["results"]
     keys = first.keys() & second.keys()
-    changed = sum(first[key] != second[key] for key in keys)
+    changed_ids = [key for key in sorted(keys) if first[key] != second[key]]
+    changed = len(changed_ids)
     return {"compared_videos": len(keys), "changed_videos": changed,
-            "changed_fraction": changed / len(keys) if keys else 0.0}
+            "changed_fraction": changed / len(keys) if keys else 0.0,
+            "changed_video_ids": changed_ids[:20]}
 
 
 def audit(args):
@@ -96,9 +98,12 @@ def audit(args):
         hier_use=["level_4", "level_3", "level_2", "level_1"],
         hier_ret_num="top-k",
     ))
-    level_changes = {level: 0 for level in original}
+    membership_changes = {level: 0 for level in original}
+    rank_only_changes = {level: 0 for level in original}
+    overlaps = {level: [] for level in original}
     raw_cosines, projected_cosines = [], []
     raw_l2, projected_l2 = [], []
+    raw_relative_l2, projected_relative_l2 = [], []
     windows = 0
     first_changed_example = None
     with torch.no_grad():
@@ -112,8 +117,17 @@ def audit(args):
                 b, b_trace = Vid2Seq.hierarchical_memory_search(
                     retrieval, target, args.soft_k, medoid, return_trace=True)
                 for a_level, b_level in zip(a_trace, b_trace):
-                    if a_level["clusters"] != b_level["clusters"]:
-                        level_changes[a_level["level"]] += 1
+                    level = a_level["level"]
+                    if level != b_level["level"]:
+                        raise ValueError("hierarchy levels do not match")
+                    a_names, b_names = a_level["clusters"], b_level["clusters"]
+                    a_set, b_set = set(a_names), set(b_names)
+                    if a_set != b_set:
+                        membership_changes[level] += 1
+                    elif a_names != b_names:
+                        rank_only_changes[level] += 1
+                    union = a_set | b_set
+                    overlaps[level].append(len(a_set & b_set) / len(union) if union else 1.0)
                 a_proj = projection(a.float())
                 b_proj = projection(b.float())
                 raw_cosines.append(float(F.cosine_similarity(a.float(), b.float()).item()))
@@ -122,6 +136,10 @@ def audit(args):
                 projected_distance = float(torch.linalg.vector_norm(a_proj - b_proj).item())
                 raw_l2.append(raw_distance)
                 projected_l2.append(projected_distance)
+                raw_scale = (torch.linalg.vector_norm(a.float()) + torch.linalg.vector_norm(b.float())) / 2
+                projected_scale = (torch.linalg.vector_norm(a_proj) + torch.linalg.vector_norm(b_proj)) / 2
+                raw_relative_l2.append(raw_distance / max(float(raw_scale.item()), 1e-12))
+                projected_relative_l2.append(projected_distance / max(float(projected_scale.item()), 1e-12))
                 if first_changed_example is None and projected_distance > 1e-6:
                     first_changed_example = {
                         "video_id": video_id, "window": window,
@@ -135,11 +153,17 @@ def audit(args):
         "bank": bank_stats,
         "retrieval": {
             "videos": len(video_ids), "windows": windows,
-            "changed_selection_by_level": level_changes,
+            "changed_membership_by_level": membership_changes,
+            "changed_ranking_only_by_level": rank_only_changes,
+            "mean_selection_jaccard_by_level": {
+                level: float(np.mean(values)) for level, values in overlaps.items()
+            },
             "mean_raw_cosine": float(np.mean(raw_cosines)),
             "mean_raw_l2": float(np.mean(raw_l2)),
+            "mean_raw_relative_l2": float(np.mean(raw_relative_l2)),
             "mean_projected_cosine": float(np.mean(projected_cosines)),
             "mean_projected_l2": float(np.mean(projected_l2)),
+            "mean_projected_relative_l2": float(np.mean(projected_relative_l2)),
             "projected_changed_windows": sum(value > 1e-6 for value in projected_l2),
             "first_changed_example": first_changed_example,
         },
